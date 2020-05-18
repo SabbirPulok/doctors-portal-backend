@@ -8,7 +8,7 @@ app.use(cors());
 app.use(bodyParser.json());
 
 const MongoClient = require('mongodb').MongoClient;
-const ObjectID = require('mongodb').ObjectID;
+const ObjectId = require('mongodb').ObjectID;
 
 const uri = process.env.DB_PATH;
 
@@ -24,10 +24,10 @@ app.get('/',(req,res)=>{
 //Get The Appointments
 app.get('/appointments', (req, res) => {
     client = new MongoClient(uri, {useNewUrlParser : true,  useUnifiedTopology: true });
-    client.connect(conErr => {
+    client.connect(error => {
         const collection = client.db('doctorsPanel').collection('appointment');
         collection.find().toArray((err , documents) => {
-            if(err) {
+            if(error) {
                 res.status(500).send(err)
             }
             else{
@@ -35,11 +35,11 @@ app.get('/appointments', (req, res) => {
             } 
         })
     })
-    client.close();
+    //client.close();
 })
 app.get('/bookedAppointments', (req, res) => {
     client = new MongoClient(uri, {useNewUrlParser : true,  useUnifiedTopology: true });
-    client.connect(conErr => {
+    client.connect(error => {
         const collection = client.db('doctorsPanel').collection('bookedAppointments');
         collection.find().toArray((err , documents) => {
             if(err) {
@@ -52,7 +52,6 @@ app.get('/bookedAppointments', (req, res) => {
     })
     client.close();
 })
-
 app.post('/placeBooking',(req,res)=>{
     client = new MongoClient(uri, { 
         useNewUrlParser: true, 
@@ -73,9 +72,97 @@ app.post('/placeBooking',(req,res)=>{
                 //console.log(result.ops[0]);
             }
         });
-        //client.close();
     });
+    //client.close();
 });
+
+app.post('/updateBookingStatus',(req,res)=>{
+    client = new MongoClient(uri, { 
+        useNewUrlParser: true, 
+        useUnifiedTopology: true
+    });
+    const data = req.body;
+    client.connect(error => {
+        const collection = client.db("doctorsPanel").collection("bookedAppointments");
+        collection.updateOne(
+            {_id:ObjectId(data.id)},
+            {
+                $set:{ "status":data.status},
+                $currentDate: {"lastModified":true}
+            },
+            (err,result)=>{
+            if(err)
+            {
+                res.status(500).send({message:err})
+                console.log(err);
+            }
+            else
+            {
+                res.send(result);
+            }
+        });
+    });
+    //client.close();
+});
+
+app.post('/updatePrescription',(req,res)=>{
+    client = new MongoClient(uri, { 
+        useNewUrlParser: true, 
+        useUnifiedTopology: true
+    });
+    const data = req.body;
+    client.connect(error => {
+        const collection = client.db("doctorsPanel").collection("bookedAppointments");
+        collection.updateOne(
+            {_id:ObjectId(data.id)},
+            {
+                $set:{ "prescription":data.prescription},
+                $currentDate: {"lastModified":true}
+            },
+            (err,result)=>{
+            if(err)
+            {
+                res.status(500).send({message:err})
+                console.log(err);
+            }
+            else
+            {
+                res.send(result);
+            }
+        });
+    });
+    //client.close();
+});
+
+app.post('/updateVisitingStatus',(req,res)=>{
+    client = new MongoClient(uri, { 
+        useNewUrlParser: true, 
+        useUnifiedTopology: true
+    });
+    const data = req.body;
+    client.connect(error => {
+        const collection = client.db("doctorsPanel").collection("bookedAppointments");
+        collection.updateOne(
+            {_id:ObjectId(data.id)},
+            {
+                $set:{ "visitingStatus":data.visitingStatus},
+                $currentDate: {"lastModified":true}
+            },
+            (err,result)=>{
+            if(err)
+            {
+                res.status(500).send({message:err})
+                console.log(err);
+            }
+            else
+            {
+                res.send(result);
+            }
+        });
+    });
+    //client.close();
+});
+
 //insert All Appointments
 app.post('/addAppointments',(req,res)=>{
     client = new MongoClient(uri, { 
@@ -97,11 +184,10 @@ app.post('/addAppointments',(req,res)=>{
             console.log(result.ops[0]);
         }
         //console.log(err);
-        client.close();
     });
+    client.close();
     
     });
 });
-
 const port =process.env.PORT || 4200;
 app.listen(port,()=>console.log("Listening to port ",port));
